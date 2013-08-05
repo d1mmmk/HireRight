@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html class="no-js" ng-app="bmrapp">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="css/style.css">
+        <script src="js/modernizr.min.js"></script>
+    </head>
+    <body ng-controller="bmr">
+        <div class="col-12 col-sm-4 col-lg-4">
+            <h3>BMR calculation form</h3>
+            <form class="form-horizontal" id="form">
+                <fieldset >
+                    <div class="row">
+                        <label for="system" class="control-label col-12 col-sm-6 col-lg-4">Formula:</label>
+                        <div class="col-12 col-sm-6 col-lg-6">
+                            <select id="system" ng-model="form.formula" ng-options="f.label for f in formuls" ng-change="change()">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="system" class="control-label col-12 col-sm-6 col-lg-4">Measuring system:</label>
+                        <div class="col-12 col-sm-6 col-lg-6">
+                            <select id="system" ng-model="form.system" ng-options="s.label for s in systems" ng-change="change()">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" ng-hide="form.system.value == 'imperial'">
+                        <label for="height_cm" class="control-label col-12 col-sm-6 col-lg-4">Height (centimeters):</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input id="height_cm" type="number" min="30" ng-model="form.height_cm" ng-change="metric_to_imperial(); change();">
+                        </div>
+                    </div>
+                    <div class="row" ng-show="form.system.value == 'imperial'">
+                        <label for="height_feet" class="control-label col-12 col-sm-6 col-lg-4">Height (feet):</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input ng-model="form.height_feet" id="height_feet" type="number"  min="0" ng-change="imperial_to_metric(); change();">
+                        </div>
+                    </div>
+                    <div class="row" ng-show="form.system.value == 'imperial'">
+                        <label for="height_inches" class="control-label col-12 col-sm-6 col-lg-4">(inches):</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input ng-model="form.height_inches" id="height_inches" type="number"  min="0" max="12" ng-change="imperial_to_metric(); change();">
+                        </div>
+                    </div>
+                    <div class="row" ng-hide="form.system.value == 'imperial'">
+                        <label for="weight_kg" class="control-label col-12 col-sm-6 col-lg-4">Weight (Kg):</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input ng-model="form.weight_kg" id="weight_kg" type="number"  min="1" ng-change="metric_to_imperial(); change();">
+                        </div>
+                    </div>
+                    <div class="row" ng-show="form.system.value == 'imperial'">
+                        <label for="weight_pounds" class="control-label col-12 col-sm-6 col-lg-4">Weight (pounds):</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input ng-model="form.weight_pounds" id="weight_pounds" type="number"  min="1" ng-change="imperial_to_metric(); change();">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="age" class="control-label col-12 col-sm-6 col-lg-4">Age:</label>
+                        <div class="col-12 col-sm-4 col-lg-3">
+                            <input ng-model="form.age" id="age" type="number"  min="1" ng-change="change();">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="gender" class="control-label col-12 col-sm-6 col-lg-4">Gender:</label>
+                        <div class="col-12 col-sm-6 col-lg-6">
+                            <select ng-model="form.gender" id="gender" ng-options="g.label for g in genders" ng-change="change();">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="exercise" class="control-label col-12 col-sm-6 col-lg-4">Exercise level:</label>
+                        <div class="col-12 col-sm-6 col-lg-6">
+                            <select ng-model="form.exercise" id="exercise" ng-options="e.label for e in exercises" ng-change="change();">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row"></div>
+                    <button type="submit" ng-show="((form.height_cm && form.weight_kg) || ((form.height_feet || form.height_inches) && form.weight_pounds)) && form.gender && form.age" ng-click="calc()" class="btn btn-default">Calculate</button>
+
+                    <div class="row" ng-show="form.result">
+                        <label for="gender" class="control-label col-12 col-sm-6 col-lg-4">Daily сalorie:</label>
+                        <div class="col-12 col-sm-6 col-lg-8">
+                            {{form.result}}
+                        </div>
+                    </div>
+                    <div class="row" ng-show="form.result">
+                        <label for="gender" class="control-label col-12 col-sm-6 col-lg-4">(intake for  weight loss):</label>
+                        <div class="col-12 col-sm-6 col-lg-8">
+                            {{form.loss}}
+                        </div>
+                    </div>
+                    <button type="submit" ng-show="form.result" ng-click="save()" class="btn btn-default">Save</button>
+                    
+                </fieldset>
+            </form>
+        </div>
+
+        <div class="col-12 col-sm-8 col-lg-8">
+            <h3>Results</h3>
+            <table ng-show="results.length" class="table" width="100%">
+                <thead>
+                    <tr>
+                        <th rowspan="2">#</th>
+                        <th colspan="3" class="text-center">Height</th>
+                        <th colspan="2" class="text-center">Weight</th>
+                        <th rowspan="2">Age</th>
+                        <th rowspan="2">Gender</th>
+                        <th rowspan="2">Formula</th>
+                        <th rowspan="2">Exercise</th>
+                    </tr>
+                    <tr>
+                        <td class="text-center">cm</td>
+                        <td class="text-center">feet</td>
+                        <td class="text-center">inches</td>
+                        <td class="text-center">kg</td>
+                        <td class="text-center">pounds</td>
+                    </tr>
+                </thead>
+                <tbody class="table-hover">
+                    <tr ng-repeat="result in results">
+                        <td>{{$index+1}}</td>
+                        <td><span ng-show="result.system.value == 'metric'">{{result.height_cm}}</span></td>
+                        <td><span ng-show="result.system.value == 'imperial'">{{result.height_feet}}</span></td>
+                        <td><span ng-show="result.system.value == 'imperial'">{{result.height_inches}}</span></td>
+                        <td><span ng-show="result.system.value == 'metric'">{{result.weight_kg}}</span></td>
+                        <td><span ng-show="result.system.value == 'imperial'">{{result.weight_pounds}}</span></td>
+                        <td>{{result.age}}</td>
+                        <td>{{result.gender.label}}</td>
+                        <td>{{result.formula.label}}</td>
+                        <td>{{result.exercise.label}}</td>
+                        <td><span class="btn  btn-default" ng-click="show(result)">show</span></td>
+                        <td><span class="btn  btn-default" ng-click="delete($index)">X</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-12">
+        <div class="col-12 col-sm-6 col-lg-6">
+            <h4>The original Harris-Benedict equations published in 1918 and 1919.</h4>
+            <p>Men BMR = 66.4730 + (13.7516 x weight in kg) + (5.0033 x height in cm) – (6.7550 x age in years)</p>
+            <p>Women   BMR = 655.0955 + (9.5634 x weight in kg) + (1.8496 x height in cm) – (4.6756 x age in years)</p>
+            <h4>The Harris-Benedict equations revised by Roza and Shizgal in 1984.</h4>
+            <p>Men BMR = 88.362 + (13.397 x weight in kg) + (4.799 x height in cm) - (5.677 x age in years)</p>
+            <p>Women   BMR = 447.593 + (9.247 x weight in kg) + (3.098 x height in cm) - (4.330 x age in years)</p>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-6">
+            <p>To determine your total daily calorie needs, multiply your BMR by the appropriate activity factor, as follows:</p>
+            <ul>
+                <li>If you are sedentary (little or no exercise) : Calorie-Calculation = BMR x 1.2</li>
+                <li>If you are lightly active (light exercise/sports 1-3 days/week) : Calorie-Calculation = BMR x 1.375</li>
+                <li>If you are moderatetely active (moderate exercise/sports 3-5 days/week) : Calorie-Calculation = BMR x 1.55</li>
+                <li>If you are very active (hard exercise/sports 6-7 days a week) : Calorie-Calculation = BMR x 1.725</li>
+                <li>If you are extra active (very hard exercise/sports & physical job or 2x training) : Calorie-Calculation = BMR x 1.9</li>
+            </ul>
+        </div>
+        </div>
+        <script src="js/angular.min.js"></script>
+        <script src="build/application.js"></script>
+        <script src="http://localhost:1337/livereload.js"></script>
+    </body>
+</html>
